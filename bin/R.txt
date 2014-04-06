@@ -428,8 +428,6 @@ int style AppBaseTheme 0x7f0b0083
 int style AppTheme 0x7f0b0084
 int style CustomActionBarTheme 0x7f0b0085
 int style MyActionBar 0x7f0b0086
-int style MyActionBarTabText 0x7f0b0088
-int style MyActionBarTitleText 0x7f0b0087
 int style TextAppearance_AppCompat_Base_CompactMenu_Dialog 0x7f0b0063
 int style TextAppearance_AppCompat_Base_SearchResult 0x7f0b006d
 int style TextAppearance_AppCompat_Base_SearchResult_Subtitle 0x7f0b006f

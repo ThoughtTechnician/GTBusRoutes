@@ -1485,14 +1485,6 @@ containing a value of this type.
  ActionBar styles 
          */
         public static final int MyActionBar=0x7f0b0086;
-        /**  ActionBar tabs text 
- The textColor property is backward compatible with the Support Library 
-         */
-        public static final int MyActionBarTabText=0x7f0b0088;
-        /**  ActionBar title text 
- The textColor property is backward compatible with the Support Library 
-         */
-        public static final int MyActionBarTitleText=0x7f0b0087;
         /**  Mimic text appearance in select_dialog_item.xml 
          */
         public static final int TextAppearance_AppCompat_Base_CompactMenu_Dialog=0x7f0b0063;
