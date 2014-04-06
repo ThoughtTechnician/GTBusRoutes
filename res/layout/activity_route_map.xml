@@ -23,8 +23,8 @@
                 class="com.google.android.gms.maps.SupportMapFragment"
                 map:cameraTargetLat="33.7765"
                 map:cameraTargetLng="-84.4002"
-                map:cameraZoom="13"
-                map:mapType="normal"
+                map:cameraZoom="14"
+                map:mapType="hybrid"
                 map:uiCompass="true"/>
 
             <LinearLayout

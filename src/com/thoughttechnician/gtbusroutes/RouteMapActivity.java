@@ -32,39 +32,17 @@ public class RouteMapActivity extends ActionBarActivity {
 			mapFragment = SupportMapFragment.newInstance(options);
 			fm.beginTransaction().add(R.id.mapFragmentContainer, mapFragment).commit();
 		}
-		GoogleMap map = ((SupportMapFragment)mapFragment).getMap();
-//		map.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-//			
-//			@Override
-//			public void onMapLoaded() {
-//				GoogleMap map = ((SupportMapFragment)getSupportFragmentManager()
-//						.findFragmentById(R.id.mapFragmentContainer)).getMap();
-//				if (map != null) {
-//					map.moveCamera(CameraUpdateFactory.newLatLngZoom(ATLANTA, 15));
-//				} else {
-//					Log.d(TAG, "Map is NULL, dawg!");
-//				}
-//				
-//			}
-//		});
-
-		
+		GoogleMap map = ((SupportMapFragment)mapFragment).getMap();		
 	}
 	public void onCheckboxClicked(View view) {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager()
 				.findFragmentById(R.id.mapFragmentContainer)).getMap();
 		map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-			
 			@Override
 			public void onMapClick(LatLng arg0) {
 				Log.d(TAG, "LatLng: " + arg0);
 			}
 		});
-		if (map != null) {
-			//map.moveCamera(CameraUpdateFactory.newLatLngZoom(ATLANTA, 15));
-		} else {
-			Log.d(TAG, "Map is NULL, dawg!");
-		}
 	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
