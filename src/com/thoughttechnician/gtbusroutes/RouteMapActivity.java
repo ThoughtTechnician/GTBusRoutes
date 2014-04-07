@@ -7,9 +7,12 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnFocusChangeListener;
+import android.view.View.OnHoverListener;
+import android.widget.CheckBox;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -32,7 +35,8 @@ public class RouteMapActivity extends ActionBarActivity {
 			mapFragment = SupportMapFragment.newInstance(options);
 			fm.beginTransaction().add(R.id.mapFragmentContainer, mapFragment).commit();
 		}
-		GoogleMap map = ((SupportMapFragment)mapFragment).getMap();		
+		GoogleMap map = ((SupportMapFragment)mapFragment).getMap();
+
 	}
 	public void onCheckboxClicked(View view) {
 		GoogleMap map = ((SupportMapFragment) getSupportFragmentManager()
