@@ -32,50 +32,51 @@
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_marginTop="10dp"
-                android:orientation="horizontal" >
-
-                <CheckBox
-                    android:id="@+id/checkbox_standard"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:onClick="onCheckboxClicked"
-                    android:textColor="#ffcc00" />
+                android:orientation="horizontal"
+                android:background="#80000000"
+                android:layout_centerHorizontal="true">
 
                 <CheckBox
                     android:id="@+id/checkbox_red"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:button="@drawable/red_checkbox_selector" />
+                    android:button="@drawable/red_checkbox_selector"
+                    android:layout_weight="1" />
 
                 <CheckBox
                     android:id="@+id/checkbox_blue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:button="@drawable/blue_checkbox_selector" />
+                    android:button="@drawable/blue_checkbox_selector"
+                    android:layout_weight="1" />
 
                 <CheckBox
                     android:id="@+id/checkbox_green"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:button="@drawable/green_checkbox_selector" />
+                    android:button="@drawable/green_checkbox_selector"
+                    android:layout_weight="1" />
 
                 <CheckBox
                     android:id="@+id/checkbox_emory"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:button="@drawable/emory_checkbox_selector" />
+                    android:button="@drawable/emory_checkbox_selector"
+                    android:layout_weight="1" />
 
                 <CheckBox
                     android:id="@+id/checkbox_trolley"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:button="@drawable/trolley_checkbox_selector" />
+                    android:button="@drawable/trolley_checkbox_selector"
+                    android:layout_weight="1" />
 
                 <CheckBox
                     android:id="@+id/checkbox_rambler"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:button="@drawable/rambler_checkbox_selector" />
+                    android:button="@drawable/rambler_checkbox_selector"
+                    android:layout_weight="1" />
             </LinearLayout>
         </RelativeLayout>
     </FrameLayout>
