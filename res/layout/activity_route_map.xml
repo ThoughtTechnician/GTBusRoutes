@@ -19,12 +19,7 @@
                 android:id="@+id/mapFragmentContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                class="com.google.android.gms.maps.SupportMapFragment"
-                map:cameraTargetLat="33.7765"
-                map:cameraTargetLng="-84.4002"
-                map:cameraZoom="14"
-                map:mapType="hybrid"
-                map:uiCompass="true" />
+                class="com.google.android.gms.maps.SupportMapFragment" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -46,7 +41,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:button="@drawable/red_checkbox_selector" />
+                        android:button="@drawable/red_checkbox_selector"/>
                 </RelativeLayout>
 
                 <RelativeLayout
@@ -59,7 +54,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:button="@drawable/blue_checkbox_selector" />
+                        android:button="@drawable/blue_checkbox_selector"/>
                 </RelativeLayout>
 
                 <RelativeLayout
@@ -72,7 +67,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:button="@drawable/green_checkbox_selector" />
+                        android:button="@drawable/green_checkbox_selector"/>
                 </RelativeLayout>
 
                 <RelativeLayout
@@ -85,7 +80,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:button="@drawable/emory_checkbox_selector" />
+                        android:button="@drawable/emory_checkbox_selector"/>
                 </RelativeLayout>
 
                 <RelativeLayout
@@ -98,7 +93,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:button="@drawable/trolley_checkbox_selector" />
+                        android:button="@drawable/trolley_checkbox_selector"/>
                 </RelativeLayout>
 
                 <RelativeLayout
@@ -111,7 +106,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:button="@drawable/rambler_checkbox_selector" />
+                        android:button="@drawable/rambler_checkbox_selector"/>
                 </RelativeLayout>
             </LinearLayout>
         </RelativeLayout>
