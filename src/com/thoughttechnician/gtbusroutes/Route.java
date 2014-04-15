@@ -33,4 +33,7 @@ public class Route {
 	public List<List<LatLng>> getPaths() {
 		return pathList;
 	}
+	public List<Stop> getStops() {
+		return stopList;
+	}
 }

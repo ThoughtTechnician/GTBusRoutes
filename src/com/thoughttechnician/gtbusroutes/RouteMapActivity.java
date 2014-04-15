@@ -1,19 +1,31 @@
 package com.thoughttechnician.gtbusroutes;
 
 import java.io.BufferedInputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,6 +38,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 public class RouteMapActivity extends ActionBarActivity {
 	private static final LatLng ATLANTA = new LatLng(33.7765,-84.4002);
 	private static final String TAG = "RouteMapActivity";
+	private DrawerLayout mDrawerLayout;
+	private ActionBarDrawerToggle mDrawerToggle;
 	private XMLHandler xmlHandler = null;
 	private List<Route> routes = null;
 
@@ -47,6 +61,26 @@ public class RouteMapActivity extends ActionBarActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_route_map);
+		
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.container);
+		mDrawerToggle = new ActionBarDrawerToggle(
+				this,
+				mDrawerLayout,
+				R.drawable.ic_drawer,
+				R.string.drawer_open,
+				R.string.drawer_close) {
+			public void onDrawerClosed(View view) {
+				super.onDrawerClosed(view);
+				//getSupportActionBar().setTitle(title);
+			}
+			public void onDrawerOpened(View view) {
+				super.onDrawerOpened(view);
+			}
+		};
+		mDrawerLayout.setDrawerListener(mDrawerToggle);
+		
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		getSupportActionBar().setHomeButtonEnabled(true);
 		
 		FragmentManager fm = getSupportFragmentManager();
 		Fragment mapFragment = fm.findFragmentById(R.id.mapFragmentContainer);
@@ -209,7 +243,50 @@ public class RouteMapActivity extends ActionBarActivity {
 		} else {
 			checkAllBoxes();
 		}
+		//maps tags to titles
+		Map<String, String> titleMap = new Hashtable<String, String>();
+		for (Route route : routes) {
+			for (Stop stop : route.getStops()) {
+				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+				String title = processTitle(stop.getTitle());
+				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+				if (!titleMap.values().contains(title)) {
+					titleMap.put(stop.getTag(), title);
+				}
+				
+			}
+		}
+		Collection<String> values = titleMap.values();
+		ListView sideBar = (ListView) findViewById(R.id.left_drawer);
+		String[] titleArr = values.toArray(new String[values.size()]);
+		Arrays.sort(titleArr);
+		Log.d(TAG, "Array: " + titleArr);
+		Adapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, titleArr);
+		Log.d(TAG, "Adapter: " + adapter);
+		sideBar.setAdapter((ListAdapter)adapter);
 	}
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Pass the event to ActionBarDrawerToggle, if it returns
+        // true, then it has handled the app icon touch event
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+          return true;
+        }
+        // Handle your other action bar items...
+
+        return super.onOptionsItemSelected(item);
+    }
 	private void checkAllBoxes() {
 		redCheckBox.setChecked(true);
 		blueCheckBox.setChecked(true);
@@ -220,7 +297,8 @@ public class RouteMapActivity extends ActionBarActivity {
 	}
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
-		savedInstanceState.
+		//savedInstanceState.
+		super.onSaveInstanceState(savedInstanceState);
 	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -229,17 +307,39 @@ public class RouteMapActivity extends ActionBarActivity {
 		getMenuInflater().inflate(R.menu.route_map, menu);
 		return true;
 	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
+	private String processTitle(String title) {
+		String newTitle = new String(title);
+		int ind = newTitle.indexOf(" - Arrival");
+		if (ind != -1) {
+			if (ind + 10 == newTitle.length()) {
+				newTitle = newTitle.substring(0, ind);
+			} else {
+				newTitle = newTitle.substring(0, ind) + newTitle.substring(ind + 10, newTitle.length() - 1);
+			}
+		} else {
+			ind = newTitle.indexOf(" - Hidden Departure");
+			if (ind != -1) {
+				if (ind + 19 == newTitle.length()) {
+					newTitle = newTitle.substring(0, ind);
+				} else {
+					newTitle = newTitle.substring(0, ind) + newTitle.substring(ind + 19, newTitle.length() - 1);
+				}
+			}
 		}
-		return super.onOptionsItemSelected(item);
+		ind = newTitle.indexOf("Street");
+		if (ind != -1) {
+			Log.d(TAG, newTitle);
+			Log.d(TAG, "ind: " + ind);
+			Log.d(TAG, "ind + 6 : " + (ind + 6));
+			Log.d(TAG, "newTitle.length() - 1: " + (newTitle.length() - 1));
+			if (ind + 6 == newTitle.length()) {
+				newTitle = newTitle.substring(0, ind) + "St";
+			} else {
+				newTitle = newTitle.substring(0, ind) + "St" + newTitle.substring(ind + 6, newTitle.length() - 1);
+			}
+			Log.d(TAG, "fixed: " + newTitle);
+		}
+		return newTitle;
 	}
 
 }

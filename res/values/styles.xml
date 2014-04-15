@@ -19,7 +19,7 @@
 
     <!-- the theme applied to the application or activity -->
     <style name="CustomActionBarTheme"
-           parent="@style/Theme.AppCompat.Light.DarkActionBar">
+           parent="@style/Theme.AppCompat.Light.LightActionBar">
 
 
         <!-- Support library compatibility -->
