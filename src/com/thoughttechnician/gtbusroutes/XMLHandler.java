@@ -19,18 +19,54 @@ public class XMLHandler {
 	private static final String ns = null;
 	private static final String TAG = "XMLHandler";
 	
-	public List<Route> parse(InputStream in) throws XmlPullParserException, IOException {
+	public List<Vehicle> parseVehicleLocation(InputStream in) throws XmlPullParserException, IOException {
 		try {
 			XmlPullParser parser = Xml.newPullParser();
 			parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
 			parser.setInput(in, null);
 			parser.nextTag();
-			return readFeed(parser);
+			return readVehicleLocationBody(parser);
 		} finally {
 			in.close();
 		}
 	}
-	private List<Route> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
+	public List<Vehicle> readVehicleLocationBody(XmlPullParser parser) throws XmlPullParserException, IOException {
+		List<Vehicle> vehicles = new ArrayList<Vehicle>();
+		parser.require(XmlPullParser.START_TAG, ns, "body");
+		while (parser.next() != XmlPullParser.END_TAG) {
+			if (parser.getEventType() != XmlPullParser.START_TAG) {
+				continue;
+			}
+			String name = parser.getName();
+			if (name.equals("vehicle")) {
+				vehicles.add(readVehicle(parser));
+			} else {
+				skip(parser);
+			}
+		}
+		return vehicles;
+	}
+	public Vehicle readVehicle(XmlPullParser parser) throws XmlPullParserException, IOException {
+		parser.require(XmlPullParser.START_TAG, ns, "vehicle");
+		int id = Integer.parseInt(parser.getAttributeValue(ns, "id"));
+		String routeTag = parser.getAttributeValue(ns, "routeTag");
+		String dirTag = parser.getAttributeValue(ns, "dirTag");
+		LatLng coords = new LatLng(Double.parseDouble(parser.getAttributeValue(ns, "lat")), Double.parseDouble(parser.getAttributeValue(ns, "lon")));
+		int heading = Integer.parseInt(parser.getAttributeValue(ns, "heading"));
+		return new Vehicle(id, routeTag, dirTag, coords, heading);
+	}
+	public List<Route> parseRouteConfig(InputStream in) throws XmlPullParserException, IOException {
+		try {
+			XmlPullParser parser = Xml.newPullParser();
+			parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+			parser.setInput(in, null);
+			parser.nextTag();
+			return readRouteConfigBody(parser);
+		} finally {
+			in.close();
+		}
+	}
+	private List<Route> readRouteConfigBody(XmlPullParser parser) throws XmlPullParserException, IOException {
 		List<Route> routes = new ArrayList<Route>();
 		parser.require(XmlPullParser.START_TAG, ns, "body");
 		while (parser.next() != XmlPullParser.END_TAG) {

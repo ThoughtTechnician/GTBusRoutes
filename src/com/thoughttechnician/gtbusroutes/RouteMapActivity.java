@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -42,6 +43,7 @@ public class RouteMapActivity extends ActionBarActivity {
 	private ActionBarDrawerToggle mDrawerToggle;
 	private XMLHandler xmlHandler = null;
 	private List<Route> routes = null;
+	private List<Vehicle> vehicles = null;
 
 	private Polyline[] redLines = null;
 	private Polyline[] blueLines = null;
@@ -117,7 +119,8 @@ public class RouteMapActivity extends ActionBarActivity {
 		try {
 			if (routes == null) {
 				xmlHandler = new XMLHandler();
-				routes = xmlHandler.parse(new BufferedInputStream(getResources().openRawResource(R.raw.my_xml)));
+				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicleLocation)));
 			}
 
 		} catch (Exception e) {

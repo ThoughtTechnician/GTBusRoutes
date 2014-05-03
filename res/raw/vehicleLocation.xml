@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+<body copyright="All data copyright Georgia Tech Campus 2014.">
+<vehicle id="404" routeTag="trolley" dirTag="marta" lat="33.780875" lon="-84.384939" secsSinceReport="3" predictable="true" heading="266" speedKmHr="5"/>
+<vehicle id="402" routeTag="trolley" dirTag="marta" lat="33.776912" lon="-84.393804" secsSinceReport="3" predictable="true" heading="91" speedKmHr="0"/>
+<vehicle id="405" routeTag="trolley" dirTag="hub" lat="33.779698" lon="-84.3889" secsSinceReport="6" predictable="true" heading="172" speedKmHr="0"/>
+<lastTime time="1397601182903"/>
+<keyForNextTime value="2841272424699" />
+</body>
+
