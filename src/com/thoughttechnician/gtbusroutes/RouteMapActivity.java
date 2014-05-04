@@ -1,15 +1,25 @@
 package com.thoughttechnician.gtbusroutes;
 
 import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
-
+import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -39,6 +49,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 public class RouteMapActivity extends ActionBarActivity {
 	private static final LatLng ATLANTA = new LatLng(33.7765,-84.4002);
 	private static final String TAG = "RouteMapActivity";
+	private static final String ROUTE_CONFIG_FILENAME = "route_config.xml";
 	private DrawerLayout mDrawerLayout;
 	private ActionBarDrawerToggle mDrawerToggle;
 	private XMLHandler xmlHandler = null;
@@ -58,6 +69,15 @@ public class RouteMapActivity extends ActionBarActivity {
 	private CheckBox emoryCheckBox = null;
 	private CheckBox trolleyCheckBox = null;
 	private CheckBox ramblerCheckBox = null;
+	
+	private List<List<LatLng>> redPaths = null;
+	private List<List<LatLng>> bluePaths = null;
+	private List<List<LatLng>> greenPaths = null;
+	private List<List<LatLng>> emoryPaths = null;
+	private List<List<LatLng>> trolleyPaths = null;
+	private List<List<LatLng>> ramblerPaths = null;
+	
+	private GoogleMap map;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +113,7 @@ public class RouteMapActivity extends ActionBarActivity {
 			mapFragment = SupportMapFragment.newInstance(options);
 			fm.beginTransaction().add(R.id.mapFragmentContainer, mapFragment).commit();
 		}
-		GoogleMap map = ((SupportMapFragment)mapFragment).getMap();
+		map = ((SupportMapFragment)mapFragment).getMap();
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(ATLANTA, 14));
 		map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 		map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -110,16 +130,20 @@ public class RouteMapActivity extends ActionBarActivity {
 		trolleyCheckBox = (CheckBox) findViewById(R.id.checkbox_trolley);
 		ramblerCheckBox = (CheckBox) findViewById(R.id.checkbox_rambler);
 		
-		List<List<LatLng>> redPaths = null;
-		List<List<LatLng>> bluePaths = null;
-		List<List<LatLng>> greenPaths = null;
-		List<List<LatLng>> emoryPaths = null;
-		List<List<LatLng>> trolleyPaths = null;
-		List<List<LatLng>> ramblerPaths = null;
 		try {
 			if (routes == null) {
 				xmlHandler = new XMLHandler();
-				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+//				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+//				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
+				File downloadedFile = new File(getFilesDir() + "/" + ROUTE_CONFIG_FILENAME);
+				if (downloadedFile.exists()) {
+//					Log.d(TAG, "Downloaded File exists");
+					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(openFileInput("route_config.xml")));
+				} else {
+//					Log.d(TAG, "Downloaded File does not exist");
+					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+				}
+				
 				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
 			}
 
@@ -127,55 +151,10 @@ public class RouteMapActivity extends ActionBarActivity {
 			Log.e(TAG, "Couldn't Do it!");
 			e.printStackTrace();
 		}
-		redPaths = routes.get(0).getPaths();
-		bluePaths = routes.get(1).getPaths();
-		greenPaths = routes.get(2).getPaths();
-		trolleyPaths = routes.get(3).getPaths();
-		emoryPaths = routes.get(4).getPaths();
-		ramblerPaths = routes.get(5).getPaths();
-		redLines = new Polyline[redPaths.size()];
-		blueLines = new Polyline[bluePaths.size()];
-		greenLines = new Polyline[greenPaths.size()];
-		emoryLines = new Polyline[emoryPaths.size()];
-		trolleyLines = new Polyline[trolleyPaths.size()];
-		ramblerLines = new Polyline[ramblerPaths.size()];
-		int redPathColor = Color.parseColor(routes.get(0).getColor());
-		int bluePathColor = Color.parseColor(routes.get(1).getColor());
-		int greenPathColor = Color.parseColor(routes.get(2).getColor());
-		int trolleyPathColor = Color.parseColor(routes.get(3).getColor());
-		int emoryPathColor = Color.parseColor(routes.get(4).getColor());
-		int ramblerPathColor = Color.parseColor(routes.get(5).getColor());
-		for (int i = 0 ; i < redLines.length; i++) {
-			redLines[i] = map.addPolyline(new PolylineOptions().color(redPathColor)
-			.addAll(redPaths.get(i)));
-			redLines[i].setVisible(redCheckBox.isChecked());
-		}
-		for (int i = 0; i < blueLines.length; i++) {
-			blueLines[i] = map.addPolyline(new PolylineOptions().color(bluePathColor)
-			.addAll(bluePaths.get(i)));
-			blueLines[i].setVisible(blueCheckBox.isChecked());
-		}
-		for (int i = 0; i < greenLines.length; i++) {
-			greenLines[i] = map.addPolyline(new PolylineOptions().color(greenPathColor)
-			.addAll(greenPaths.get(i)));
-			greenLines[i].setVisible(greenCheckBox.isChecked());
-		}
-		for (int i = 0; i < emoryLines.length; i++) {
-			emoryLines[i] = map.addPolyline(new PolylineOptions().color(emoryPathColor)
-			.addAll(emoryPaths.get(i)));
-			emoryLines[i].setVisible(emoryCheckBox.isChecked());
-		}
-		for (int i = 0; i < trolleyLines.length; i++) {
-			trolleyLines[i] = map.addPolyline(new PolylineOptions().color(trolleyPathColor)
-			.addAll(trolleyPaths.get(i)));
-			trolleyLines[i].setVisible(trolleyCheckBox.isChecked());
-		}
-		for (int i = 0; i < ramblerLines.length; i++) {
-			ramblerLines[i] = map.addPolyline(new PolylineOptions().color(ramblerPathColor)
-			.addAll(ramblerPaths.get(i)));
-			ramblerLines[i].setVisible(ramblerCheckBox.isChecked());
-		}
+		//start updating route config in the background
+		downloadRouteConfig();
 
+		initializePaths();
 		
 		redCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			
@@ -250,9 +229,9 @@ public class RouteMapActivity extends ActionBarActivity {
 		Map<String, String> titleMap = new Hashtable<String, String>();
 		for (Route route : routes) {
 			for (Stop stop : route.getStops()) {
-				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
 				String title = processTitle(stop.getTitle());
-				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
 				if (!titleMap.values().contains(title)) {
 					titleMap.put(stop.getTag(), title);
 				}
@@ -263,9 +242,9 @@ public class RouteMapActivity extends ActionBarActivity {
 		ListView sideBar = (ListView) findViewById(R.id.left_drawer);
 		String[] titleArr = values.toArray(new String[values.size()]);
 		Arrays.sort(titleArr);
-		Log.d(TAG, "Array: " + titleArr);
+//		Log.d(TAG, "Array: " + titleArr);
 		Adapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, titleArr);
-		Log.d(TAG, "Adapter: " + adapter);
+//		Log.d(TAG, "Adapter: " + adapter);
 		sideBar.setAdapter((ListAdapter)adapter);
 	}
     @Override
@@ -332,18 +311,126 @@ public class RouteMapActivity extends ActionBarActivity {
 		}
 		ind = newTitle.indexOf("Street");
 		if (ind != -1) {
-			Log.d(TAG, newTitle);
-			Log.d(TAG, "ind: " + ind);
-			Log.d(TAG, "ind + 6 : " + (ind + 6));
-			Log.d(TAG, "newTitle.length() - 1: " + (newTitle.length() - 1));
+//			Log.d(TAG, newTitle);
+//			Log.d(TAG, "ind: " + ind);
+//			Log.d(TAG, "ind + 6 : " + (ind + 6));
+//			Log.d(TAG, "newTitle.length() - 1: " + (newTitle.length() - 1));
 			if (ind + 6 == newTitle.length()) {
 				newTitle = newTitle.substring(0, ind) + "St";
 			} else {
 				newTitle = newTitle.substring(0, ind) + "St" + newTitle.substring(ind + 6, newTitle.length() - 1);
 			}
-			Log.d(TAG, "fixed: " + newTitle);
+//			Log.d(TAG, "fixed: " + newTitle);
 		}
 		return newTitle;
 	}
-
+	private void downloadRouteConfig() {
+		new DownloadRouteConfigTask().execute();
+	}
+	private void initializePaths() {
+		redPaths = routes.get(0).getPaths();
+		bluePaths = routes.get(1).getPaths();
+		greenPaths = routes.get(2).getPaths();
+		trolleyPaths = routes.get(3).getPaths();
+		emoryPaths = routes.get(4).getPaths();
+		ramblerPaths = routes.get(5).getPaths();
+		redLines = new Polyline[redPaths.size()];
+		blueLines = new Polyline[bluePaths.size()];
+		greenLines = new Polyline[greenPaths.size()];
+		emoryLines = new Polyline[emoryPaths.size()];
+		trolleyLines = new Polyline[trolleyPaths.size()];
+		ramblerLines = new Polyline[ramblerPaths.size()];
+		int redPathColor = Color.parseColor(routes.get(0).getColor());
+		int bluePathColor = Color.parseColor(routes.get(1).getColor());
+		int greenPathColor = Color.parseColor(routes.get(2).getColor());
+		int trolleyPathColor = Color.parseColor(routes.get(3).getColor());
+		int emoryPathColor = Color.parseColor(routes.get(4).getColor());
+		int ramblerPathColor = Color.parseColor(routes.get(5).getColor());
+		map.clear();
+		Log.e(TAG, "Clearing Map and adding new Route Config");
+		for (int i = 0 ; i < redLines.length; i++) {
+			redLines[i] = map.addPolyline(new PolylineOptions().color(redPathColor)
+			.addAll(redPaths.get(i)));
+			redLines[i].setVisible(redCheckBox.isChecked());
+		}
+		for (int i = 0; i < blueLines.length; i++) {
+			blueLines[i] = map.addPolyline(new PolylineOptions().color(bluePathColor)
+			.addAll(bluePaths.get(i)));
+			blueLines[i].setVisible(blueCheckBox.isChecked());
+		}
+		for (int i = 0; i < greenLines.length; i++) {
+			greenLines[i] = map.addPolyline(new PolylineOptions().color(greenPathColor)
+			.addAll(greenPaths.get(i)));
+			greenLines[i].setVisible(greenCheckBox.isChecked());
+		}
+		for (int i = 0; i < emoryLines.length; i++) {
+			emoryLines[i] = map.addPolyline(new PolylineOptions().color(emoryPathColor)
+			.addAll(emoryPaths.get(i)));
+			emoryLines[i].setVisible(emoryCheckBox.isChecked());
+		}
+		for (int i = 0; i < trolleyLines.length; i++) {
+			trolleyLines[i] = map.addPolyline(new PolylineOptions().color(trolleyPathColor)
+			.addAll(trolleyPaths.get(i)));
+			trolleyLines[i].setVisible(trolleyCheckBox.isChecked());
+		}
+		for (int i = 0; i < ramblerLines.length; i++) {
+			ramblerLines[i] = map.addPolyline(new PolylineOptions().color(ramblerPathColor)
+			.addAll(ramblerPaths.get(i)));
+			ramblerLines[i].setVisible(ramblerCheckBox.isChecked());
+		}
+	}
+	private class DownloadRouteConfigTask extends AsyncTask<Void, Void, Void>{
+		@Override
+		protected Void doInBackground(Void...voids) {
+			InputStream is = null;
+			FileOutputStream os = null;
+			try {
+				URL url = new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=routeConfig");
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setReadTimeout(10000);
+				connection.setConnectTimeout(15000);
+				connection.setRequestMethod("GET");
+				connection.setDoInput(true);
+				
+				connection.connect();
+				int response = connection.getResponseCode();
+				Log.d(TAG, "Connection response is: " + response);
+				is = connection.getInputStream();
+				File file = new File(getFilesDir(), ROUTE_CONFIG_FILENAME);
+				file.createNewFile();
+				os = openFileOutput(ROUTE_CONFIG_FILENAME, Context.MODE_PRIVATE);
+				byte[] buffer = new byte[1024];
+				int charsRead;
+				while((charsRead = is.read(buffer)) != -1) {
+					os.write(buffer, 0, charsRead);
+				}
+				os.close();
+				is.close();
+				
+			} catch (Exception e) {
+				Log.e(TAG, "Could not do something within the route info task");
+			} finally {
+				if (is != null) {
+					try {
+						is.close();
+					} catch (IOException e) {
+						Log.e(TAG, "Could not close route info instream");
+					}
+				}
+				if (os != null) {
+					try {
+						os.close();
+					} catch (IOException e) {
+						Log.e(TAG, "Could not close route info outstream");
+					}
+				}
+			}
+			
+			return null;
+		}
+		@Override
+		protected void onPostExecute(Void result){
+			initializePaths();
+		}
+	}
 }
