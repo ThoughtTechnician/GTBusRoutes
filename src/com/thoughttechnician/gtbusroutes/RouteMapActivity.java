@@ -120,7 +120,7 @@ public class RouteMapActivity extends ActionBarActivity {
 			if (routes == null) {
 				xmlHandler = new XMLHandler();
 				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
-				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicleLocation)));
+				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
 			}
 
 		} catch (Exception e) {
