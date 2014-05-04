@@ -5,20 +5,22 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -37,6 +39,7 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -45,6 +48,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class RouteMapActivity extends ActionBarActivity {
 	private static final LatLng ATLANTA = new LatLng(33.7765,-84.4002);
@@ -77,7 +82,16 @@ public class RouteMapActivity extends ActionBarActivity {
 	private List<List<LatLng>> trolleyPaths = null;
 	private List<List<LatLng>> ramblerPaths = null;
 	
-	private GoogleMap map;
+	private List<Vehicle> redVehicles = null;
+	private List<Vehicle> blueVehicles = null;
+	private List<Vehicle> greenVehicles = null;
+	private List<Vehicle> trolleyVehicles = null;
+	private List<Vehicle> emoryVehicles = null;
+	private List<Vehicle> ramblerVehicles = null;
+	
+	private GoogleMap map = null;
+	private ScheduledFuture scheduledUpdater = null;
+	private ScheduledExecutorService scheduler = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +117,12 @@ public class RouteMapActivity extends ActionBarActivity {
 		
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
+		
+		scheduler = Executors.newScheduledThreadPool(1);
+		if (connected()) {
+			startUpdatingBuses();
+			Log.e(TAG, "Started Updating Buses");
+		}
 		
 		FragmentManager fm = getSupportFragmentManager();
 		Fragment mapFragment = fm.findFragmentById(R.id.mapFragmentContainer);
@@ -153,8 +173,8 @@ public class RouteMapActivity extends ActionBarActivity {
 		}
 		//start updating route config in the background
 		downloadRouteConfig();
-
-		initializePaths();
+		//should be unnecessary because it is called in route download task
+		redrawPaths();
 		
 		redCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			
@@ -327,7 +347,7 @@ public class RouteMapActivity extends ActionBarActivity {
 	private void downloadRouteConfig() {
 		new DownloadRouteConfigTask().execute();
 	}
-	private void initializePaths() {
+	private void redrawPaths() {
 		redPaths = routes.get(0).getPaths();
 		bluePaths = routes.get(1).getPaths();
 		greenPaths = routes.get(2).getPaths();
@@ -408,7 +428,7 @@ public class RouteMapActivity extends ActionBarActivity {
 				is.close();
 				
 			} catch (Exception e) {
-				Log.e(TAG, "Could not do something within the route info task");
+				Log.e(TAG, "Could not do something within the route config task");
 			} finally {
 				if (is != null) {
 					try {
@@ -430,7 +450,87 @@ public class RouteMapActivity extends ActionBarActivity {
 		}
 		@Override
 		protected void onPostExecute(Void result){
-			initializePaths();
+			redrawPaths();
 		}
+	}
+//	private class UpdateBusesTask extends AsyncTask<Void, Void, Void> {
+//		@Override
+//		protected Void doInBackground(Void...voids) {
+//			try {
+//				redVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=red"));
+//				blueVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=blue"));
+//				greenVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=green"));
+//				trolleyVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=trolley"));
+//				emoryVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=emory"));
+//				ramblerVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=rambler"));
+//			} catch (Exception e) {
+//				Toast.makeText(getApplication(), "Could not Update Routes", Toast.LENGTH_LONG).show();
+//			}
+//			return null;
+//		}
+//		
+//	}
+	private List<Vehicle> acquireVehicleLocations(URL url) throws Exception{
+		InputStream is = null;
+		List<Vehicle> vehicleResults = null;
+		try {
+			//this is where you were working
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setReadTimeout(10000);
+			connection.setConnectTimeout(15000);
+			connection.setRequestMethod("GET");
+			connection.setDoInput(true);
+			
+			connection.connect();
+			int response = connection.getResponseCode();
+			if (response != 200) {
+				throw new Exception("Response Code was " + response);
+			}
+			//Log.d(TAG, "Connection response is: " + response);
+			is = new BufferedInputStream(connection.getInputStream());
+			vehicleResults = xmlHandler.parseVehicleLocation(is);
+			is.close();
+			
+		} //catch (Exception e) {
+			//Log.e(TAG, "Could not acquire vehicle locations");
+			//e.printStackTrace();
+		//}
+		finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					Log.e(TAG, "Could not close route info instream");
+				}
+			}
+		}
+		return vehicleResults;
+	}
+	private boolean connected() {
+		ConnectivityManager manager = (ConnectivityManager)
+				getSystemService(CONNECTIVITY_SERVICE);
+		NetworkInfo info = manager.getActiveNetworkInfo();
+		return info != null && info.isConnected();
+	}
+	private void startUpdatingBuses() {
+		final Runnable updater = new Runnable() {
+			public void run() {
+				try {
+					redVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=red"));
+					blueVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=blue"));
+					greenVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=green"));
+					trolleyVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=trolley"));
+					emoryVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=emory"));
+					ramblerVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=rambler"));
+					Log.e(TAG,"Successfully updated Buses");
+				} catch (Exception e) {
+					Log.e(TAG, "Could not update buses");
+					e.printStackTrace();
+					scheduledUpdater.cancel(true);
+					Log.e(TAG, "Canceled bus updater");
+				}
+			}
+		};
+		scheduledUpdater = scheduler.scheduleAtFixedRate(updater, 10, 10, SECONDS);
 	}
 }
