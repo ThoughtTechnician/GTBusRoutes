@@ -22,7 +22,7 @@ public class Route {
 		this.oppositeColor = oppositeColor;
 		this.tag = tag;
 		this.title = title;
-		this.color = "#" + color;
+		this.color = "#B3" + color;
 		this.stopList = stopList;
 		this.directionList = directionList;
 		this.pathList = pathList;

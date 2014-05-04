@@ -310,6 +310,7 @@ public class RouteMapActivity extends ActionBarActivity {
 		getMenuInflater().inflate(R.menu.route_map, menu);
 		return true;
 	}
+ 
 	private String processTitle(String title) {
 		String newTitle = new String(title);
 		int ind = newTitle.indexOf(" - Arrival");
