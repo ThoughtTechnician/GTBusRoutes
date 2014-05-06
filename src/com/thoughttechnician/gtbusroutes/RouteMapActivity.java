@@ -107,6 +107,8 @@ public class RouteMapActivity extends ActionBarActivity {
 	private ScheduledExecutorService scheduler = null;
 	private Marker magicMarker = null;
 	
+	private final Handler handler = new Handler(Looper.getMainLooper());
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -152,13 +154,13 @@ public class RouteMapActivity extends ActionBarActivity {
 		map.moveCamera(CameraUpdateFactory.newLatLngZoom(ATLANTA, 14));
 		map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 		//magicMarker = map.addMarker(new MarkerOptions().position(ATLANTA));
-		final Handler handler = new Handler(Looper.getMainLooper());
-		handler.post(new Runnable() {
-			public void run() {
-				redrawBuses();
-				handler.postDelayed(this, 6000);
-			}
-		});
+		
+//		handler.post(new Runnable() {
+//			public void run() {
+//				redrawBuses();
+//				handler.postDelayed(this, 6000);
+//			}
+//		});
 		map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 			@Override
 			public void onMapClick(LatLng arg0) {
@@ -835,6 +837,11 @@ public class RouteMapActivity extends ActionBarActivity {
 					Log.e(TAG, "trolley vehicles: " + trolleyVehicles);
 					Log.e(TAG, "emory vehicles: " + emoryVehicles);
 					Log.e(TAG, "rambler vehicles: " + ramblerVehicles);
+					handler.post(new Runnable() {
+						public void run() {
+							redrawBuses();
+						}
+					});
 					//It is apparently illegal to edit UI from within worker thread
 					//redrawBuses();
 				} catch (Exception e) {
