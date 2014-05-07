@@ -19,7 +19,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
@@ -108,6 +111,9 @@ public class RouteMapActivity extends ActionBarActivity {
 	private Marker magicMarker = null;
 	
 	private final Handler handler = new Handler(Looper.getMainLooper());
+	private boolean summerTime;
+	private boolean networkConnected;
+	private NetworkReceiver networkReceiver;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -134,8 +140,13 @@ public class RouteMapActivity extends ActionBarActivity {
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
 		
+		networkConnected = connected();
+		IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+		networkReceiver = new NetworkReceiver();
+		this.registerReceiver(networkReceiver, filter);
+		
 		scheduler = Executors.newScheduledThreadPool(1);
-		if (connected()) {
+		if (networkConnected) {
 			startUpdatingBuses();
 			Log.e(TAG, "Started Updating Buses");
 		}
@@ -187,8 +198,8 @@ public class RouteMapActivity extends ActionBarActivity {
 //					Log.d(TAG, "Downloaded File does not exist");
 					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
 				}
-				
-				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
+				summerTime = (routes.size() == 5);
+				//vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
 			}
 
 		} catch (Exception e) {
@@ -279,21 +290,23 @@ public class RouteMapActivity extends ActionBarActivity {
 				}
 			}
 		});
-		
-		ramblerCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				for (int i = 0; i < ramblerLines.length; i++) {
-					ramblerLines[i].setVisible(isChecked);
-				}
-				if (addedRamblerVehicles != null) {
-					for (int i = 0; i < addedRamblerVehicles.size(); i++) {
-						addedRamblerVehicles.get(i).setVisible(isChecked);
+		if (!summerTime) {
+			ramblerCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+				
+				@Override
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+					for (int i = 0; i < ramblerLines.length; i++) {
+						ramblerLines[i].setVisible(isChecked);
+					}
+					if (addedRamblerVehicles != null) {
+						for (int i = 0; i < addedRamblerVehicles.size(); i++) {
+							addedRamblerVehicles.get(i).setVisible(isChecked);
+						}
 					}
 				}
-			}
-		});
+			});
+		}
+		
 		//is this just a revival?
 		if (savedInstanceState != null) {
 			
@@ -582,14 +595,19 @@ public class RouteMapActivity extends ActionBarActivity {
 		int greenPathColor = Color.parseColor(routes.get(2).getColor());
 		int trolleyPathColor = Color.parseColor(routes.get(3).getColor());
 		int emoryPathColor = Color.parseColor(routes.get(4).getColor());
-		int ramblerPathColor = Color.parseColor(routes.get(5).getColor());
+		int ramblerPathColor = 0;
+		if (!summerTime) {
+			ramblerPathColor = Color.parseColor(routes.get(5).getColor());
+		}
 		
 		redPaths = routes.get(0).getPaths();
 		bluePaths = routes.get(1).getPaths();
 		greenPaths = routes.get(2).getPaths();
 		trolleyPaths = routes.get(3).getPaths();
 		emoryPaths = routes.get(4).getPaths();
-		ramblerPaths = routes.get(5).getPaths();
+		if (!summerTime) {
+			ramblerPaths = routes.get(5).getPaths();
+		}
 //		if (redLines == null) {
 //			redLines = new Polyline[redPaths.size()];
 //		}
@@ -675,19 +693,21 @@ public class RouteMapActivity extends ActionBarActivity {
 			.addAll(trolleyPaths.get(i)));
 			trolleyLines[i].setVisible(trolleyCheckBox.isChecked());
 		}
-		
-		//update rambler route paths
-		if (ramblerLines != null) {
-			for (int i = 0; i < ramblerLines.length; i++) {
-				ramblerLines[i].remove();
+		if (!summerTime) {
+			//update rambler route paths
+			if (ramblerLines != null) {
+				for (int i = 0; i < ramblerLines.length; i++) {
+					ramblerLines[i].remove();
+				}
+			}
+			ramblerLines = new Polyline[ramblerPaths.size()];
+			for (int i = 0; i < ramblerPaths.size(); i++) {
+				ramblerLines[i] = map.addPolyline(new PolylineOptions().color(ramblerPathColor)
+				.addAll(ramblerPaths.get(i)));
+				ramblerLines[i].setVisible(ramblerCheckBox.isChecked());
 			}
 		}
-		ramblerLines = new Polyline[ramblerPaths.size()];
-		for (int i = 0; i < ramblerPaths.size(); i++) {
-			ramblerLines[i] = map.addPolyline(new PolylineOptions().color(ramblerPathColor)
-			.addAll(ramblerPaths.get(i)));
-			ramblerLines[i].setVisible(ramblerCheckBox.isChecked());
-		}
+		
 	}
 	private class DownloadRouteConfigTask extends AsyncTask<Void, Void, Void>{
 		@Override
@@ -741,6 +761,7 @@ public class RouteMapActivity extends ActionBarActivity {
 		@Override
 		protected void onPostExecute(Void result){
 			redrawPaths();
+			summerTime = (routes.size() == 5);
 			Log.e(TAG, "Just called onPostExecute method");
 		}
 	}
@@ -761,6 +782,8 @@ public class RouteMapActivity extends ActionBarActivity {
 				Log.e(TAG, "trolley vehicles: " + trolleyVehicles);
 				Log.e(TAG, "emory vehicles: " + emoryVehicles);
 				Log.e(TAG, "rambler vehicles: " + ramblerVehicles);
+				Log.d(TAG, "Connor is the MAN");
+				Log.e(TAG, "Connor is the MAN");
 				//It is apparently illegal to edit UI from within worker thread
 				//redrawBuses();
 			} catch (Exception e) {
@@ -819,39 +842,59 @@ public class RouteMapActivity extends ActionBarActivity {
 		NetworkInfo info = manager.getActiveNetworkInfo();
 		return info != null && info.isConnected();
 	}
-	private void startUpdatingBuses() {
-		final Runnable updater = new Runnable() {
-			public void run() {
-				try {
-					redVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=red"));
-					blueVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=blue"));
-					greenVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=green"));
-					trolleyVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=trolley"));
-					emoryVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=emory"));
+	final Runnable updater = new Runnable() {
+		public void run() {
+			try {
+				redVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=red"));
+				blueVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=blue"));
+				greenVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=green"));
+				trolleyVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=trolley"));
+				emoryVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=emory"));
+				if (!summerTime) {
 					ramblerVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=rambler"));
-					Log.e(TAG,"Successfully updated Buses");
-					Log.e(TAG,"Successfully updated Buses");
-					Log.e(TAG, "red vehicles: " + redVehicles);
-					Log.e(TAG, "blue vehicles: " + blueVehicles);
-					Log.e(TAG, "green vehicles: " + greenVehicles);
-					Log.e(TAG, "trolley vehicles: " + trolleyVehicles);
-					Log.e(TAG, "emory vehicles: " + emoryVehicles);
-					Log.e(TAG, "rambler vehicles: " + ramblerVehicles);
-					handler.post(new Runnable() {
-						public void run() {
-							redrawBuses();
-						}
-					});
-					//It is apparently illegal to edit UI from within worker thread
-					//redrawBuses();
-				} catch (Exception e) {
-					Log.e(TAG, "Could not update buses");
-					e.printStackTrace();
-					scheduledUpdater.cancel(true);
-					Log.e(TAG, "Canceled bus updater");
+				}
+				Log.e(TAG, "Updated Buses");
+				handler.post(new Runnable() {
+					public void run() {
+						redrawBuses();
+					}
+				});
+			} catch (Exception e) {
+				Log.e(TAG, "Bus Update Failed");
+				e.printStackTrace();
+				scheduledUpdater.cancel(true);
+				if (networkConnected) {
+					scheduledUpdater = scheduler.scheduleAtFixedRate(this, 3, 10, SECONDS);
+					Log.e(TAG, "Failed but connected: restarting in 3 seconds");
+				} else {
+					Log.e(TAG, "Failed and not connected: cancelling bus updates");
 				}
 			}
-		};
-		scheduledUpdater = scheduler.scheduleAtFixedRate(updater, 0, 10, SECONDS);
+		}
+	};
+	private void startUpdatingBuses() {
+		Log.d(TAG, "Started Updating Buses");
+		scheduledUpdater = scheduler.scheduleAtFixedRate(updater, 0, 8, SECONDS);
+	}
+	private class NetworkReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			ConnectivityManager man = (ConnectivityManager)
+					context.getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo networkInfo = man.getActiveNetworkInfo();
+			if (networkInfo != null && networkInfo.isConnected()) {
+				networkConnected = true;
+				if (scheduledUpdater.isCancelled()) {
+					scheduledUpdater = scheduler.scheduleAtFixedRate(updater, 0, 8, SECONDS);
+					Log.e(TAG, "Network now connected: restarting bus updates");
+				}
+			} else {
+				networkConnected = false;
+				scheduledUpdater.cancel(true);
+				Log.e(TAG, "Network now disconnected: cancelling bus updates");
+			}
+		}
+
 	}
 }
