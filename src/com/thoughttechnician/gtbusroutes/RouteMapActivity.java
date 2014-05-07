@@ -105,7 +105,6 @@ public class RouteMapActivity extends ActionBarActivity {
 	private List<Vehicle> ramblerVehicles = null;
 	
 	private GoogleMap map = null;
-	private ScheduledFuture scheduledUpdater = null;
 	private ScheduledFuture scheduledBusUpdater = null;
 	private ScheduledExecutorService scheduler = null;
 	private Marker magicMarker = null;
@@ -146,10 +145,7 @@ public class RouteMapActivity extends ActionBarActivity {
 		this.registerReceiver(networkReceiver, filter);
 		
 		scheduler = Executors.newScheduledThreadPool(1);
-		if (networkConnected) {
-			startUpdatingBuses();
-			Log.e(TAG, "Started Updating Buses");
-		}
+		
 
 		
 		FragmentManager fm = getSupportFragmentManager();
@@ -306,7 +302,6 @@ public class RouteMapActivity extends ActionBarActivity {
 				}
 			});
 		}
-		
 		//is this just a revival?
 		if (savedInstanceState != null) {
 			
@@ -334,6 +329,21 @@ public class RouteMapActivity extends ActionBarActivity {
 		Adapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, titleArr);
 //		Log.d(TAG, "Adapter: " + adapter);
 		sideBar.setAdapter((ListAdapter)adapter);
+	}
+	@Override
+	public void onPause() {
+		super.onPause();
+		scheduledBusUpdater.cancel(true);
+		Log.e(TAG, "canceled bus updater");
+	}
+	@Override
+	public void onResume() {
+		super.onResume();
+		networkConnected = connected();
+		if (networkConnected) {
+			startUpdatingBuses();
+			Log.e(TAG, "Started Updating Buses");
+		}
 	}
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -496,6 +506,11 @@ public class RouteMapActivity extends ActionBarActivity {
 					} else {
 						//if it is in the new data, update its position
 						//and remove its new counterpart from the data list
+						
+						Log.d(TAG, "addedGreenVehicles.get(i): " + addedGreenVehicles.get(i));
+						Log.d(TAG, "marker: " + addedGreenVehicles.get(i).marker);
+						Log.d(TAG, "greenVehicles.get(ind): " + greenVehicles.get(ind));
+						Log.d(TAG, "coords: " + greenVehicles.get(ind).coords);
 						addedGreenVehicles.get(i).marker.setPosition(greenVehicles.get(ind).coords);
 						greenVehicles.remove(ind);
 					}
@@ -789,7 +804,7 @@ public class RouteMapActivity extends ActionBarActivity {
 			} catch (Exception e) {
 				Log.e(TAG, "Could not update buses");
 				e.printStackTrace();
-				scheduledUpdater.cancel(true);
+				scheduledBusUpdater.cancel(true);
 				Log.e(TAG, "Canceled bus updater");
 			}
 			return null;
@@ -854,6 +869,7 @@ public class RouteMapActivity extends ActionBarActivity {
 					ramblerVehicles = acquireVehicleLocations(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=vehicleLocations&r=rambler"));
 				}
 				Log.e(TAG, "Updated Buses");
+				Log.e(TAG, "green vehicles: " + greenVehicles);
 				handler.post(new Runnable() {
 					public void run() {
 						redrawBuses();
@@ -862,9 +878,9 @@ public class RouteMapActivity extends ActionBarActivity {
 			} catch (Exception e) {
 				Log.e(TAG, "Bus Update Failed");
 				e.printStackTrace();
-				scheduledUpdater.cancel(true);
+				scheduledBusUpdater.cancel(true);
 				if (networkConnected) {
-					scheduledUpdater = scheduler.scheduleAtFixedRate(this, 3, 10, SECONDS);
+					scheduledBusUpdater = scheduler.scheduleAtFixedRate(this, 3, 10, SECONDS);
 					Log.e(TAG, "Failed but connected: restarting in 3 seconds");
 				} else {
 					Log.e(TAG, "Failed and not connected: cancelling bus updates");
@@ -874,7 +890,10 @@ public class RouteMapActivity extends ActionBarActivity {
 	};
 	private void startUpdatingBuses() {
 		Log.d(TAG, "Started Updating Buses");
-		scheduledUpdater = scheduler.scheduleAtFixedRate(updater, 0, 8, SECONDS);
+		if (scheduledBusUpdater != null && !scheduledBusUpdater.isCancelled()) {
+			Log.e(TAG, "startUpdatingBuses called but buses were already updating");
+		}
+		scheduledBusUpdater = scheduler.scheduleAtFixedRate(updater, 0, 8, SECONDS);
 	}
 	private class NetworkReceiver extends BroadcastReceiver {
 
@@ -885,13 +904,13 @@ public class RouteMapActivity extends ActionBarActivity {
 			NetworkInfo networkInfo = man.getActiveNetworkInfo();
 			if (networkInfo != null && networkInfo.isConnected()) {
 				networkConnected = true;
-				if (scheduledUpdater.isCancelled()) {
-					scheduledUpdater = scheduler.scheduleAtFixedRate(updater, 0, 8, SECONDS);
+				if (scheduledBusUpdater.isCancelled()) {
+					scheduledBusUpdater = scheduler.scheduleAtFixedRate(updater, 0, 8, SECONDS);
 					Log.e(TAG, "Network now connected: restarting bus updates");
 				}
 			} else {
 				networkConnected = false;
-				scheduledUpdater.cancel(true);
+				scheduledBusUpdater.cancel(true);
 				Log.e(TAG, "Network now disconnected: cancelling bus updates");
 			}
 		}

@@ -53,6 +53,8 @@ public class XMLHandler {
 		String dirTag = parser.getAttributeValue(ns, "dirTag");
 		LatLng coords = new LatLng(Double.parseDouble(parser.getAttributeValue(ns, "lat")), Double.parseDouble(parser.getAttributeValue(ns, "lon")));
 		int heading = Integer.parseInt(parser.getAttributeValue(ns, "heading"));
+		parser.nextTag();
+		parser.require(XmlPullParser.END_TAG, ns, "vehicle");
 		return new Vehicle(id, routeTag, dirTag, coords, heading);
 	}
 	public List<Route> parseRouteConfig(InputStream in) throws XmlPullParserException, IOException {
