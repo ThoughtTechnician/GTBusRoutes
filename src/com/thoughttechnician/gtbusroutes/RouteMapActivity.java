@@ -61,6 +61,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 public class RouteMapActivity extends ActionBarActivity {
 	private static final LatLng ATLANTA = new LatLng(33.7765,-84.4002);
+	private static final LatLng BEST_TARGET = new LatLng(33.77801923888944,-84.397401139140130);
 	private static final String TAG = "RouteMapActivity";
 	private static final String ROUTE_CONFIG_FILENAME = "route_config.xml";
 	private DrawerLayout mDrawerLayout;
@@ -117,7 +118,34 @@ public class RouteMapActivity extends ActionBarActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_route_map);
+		//must be done first to determine whether or not to include rambler in the
+		//whole shebang
+		try {
+			if (routes == null) {
+				xmlHandler = new XMLHandler();
+//				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+//				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
+				File downloadedFile = new File(getFilesDir() + "/" + ROUTE_CONFIG_FILENAME);
+				if (downloadedFile.exists()) {
+//					Log.d(TAG, "Downloaded File exists");
+					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(openFileInput("route_config.xml")));
+				} else {
+//					Log.d(TAG, "Downloaded File does not exist");
+					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+				}
+				summerTime = (routes.size() == 5);
+				//vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
+			}
+
+		} catch (Exception e) {
+			Log.e(TAG, "Couldn't Do it!");
+			e.printStackTrace();
+		}
+		if (summerTime) {
+			setContentView(R.layout.activity_route_map_without_rambler);
+		} else {
+			setContentView(R.layout.activity_route_map);
+		}
 		
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.container);
 		mDrawerToggle = new ActionBarDrawerToggle(
@@ -158,20 +186,27 @@ public class RouteMapActivity extends ActionBarActivity {
 			fm.beginTransaction().add(R.id.mapFragmentContainer, mapFragment).commit();
 		}
 		map = ((SupportMapFragment)mapFragment).getMap();
-		map.moveCamera(CameraUpdateFactory.newLatLngZoom(ATLANTA, 14));
+		if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+			map.setPadding(0, 70, 0, 0);
+
+		}
+		//map.moveCamera(CameraUpdateFactory.newLatLngZoom(ATLANTA, 14));
+		map.moveCamera(CameraUpdateFactory.newLatLngZoom(BEST_TARGET, 14));
 		map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-		//magicMarker = map.addMarker(new MarkerOptions().position(ATLANTA));
-		
-//		handler.post(new Runnable() {
-//			public void run() {
-//				redrawBuses();
-//				handler.postDelayed(this, 6000);
-//			}
-//		});
+		map.setMyLocationEnabled(true);
+		map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+			
+			@Override
+			public boolean onMyLocationButtonClick() {
+				// TODO Auto-generated method stub
+				return false;
+			}
+		});
+
 		map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 			@Override
 			public void onMapClick(LatLng arg0) {
-				Log.d(TAG, "LatLng: " + arg0);
+				Log.d(TAG, "CamPos: " + map.getCameraPosition());
 			}
 		});
 		redCheckBox = (CheckBox) findViewById(R.id.checkbox_red);
@@ -373,7 +408,9 @@ public class RouteMapActivity extends ActionBarActivity {
 		greenCheckBox.setChecked(true);
 		emoryCheckBox.setChecked(true);
 		trolleyCheckBox.setChecked(true);
-		ramblerCheckBox.setChecked(true);
+		if (!summerTime) {
+			ramblerCheckBox.setChecked(true);
+		}
 	}
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {

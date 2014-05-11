@@ -1430,9 +1430,10 @@ containing a value of this type.
         public static final int abc_search_view=0x7f030016;
         public static final int abc_simple_decor=0x7f030017;
         public static final int activity_route_map=0x7f030018;
-        public static final int fragment_route_map=0x7f030019;
-        public static final int sidebar=0x7f03001a;
-        public static final int support_simple_spinner_dropdown_item=0x7f03001b;
+        public static final int activity_route_map_without_rambler=0x7f030019;
+        public static final int fragment_route_map=0x7f03001a;
+        public static final int sidebar=0x7f03001b;
+        public static final int support_simple_spinner_dropdown_item=0x7f03001c;
     }
     public static final class menu {
         public static final int route_map=0x7f0e0000;
