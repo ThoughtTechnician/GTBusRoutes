@@ -28,64 +28,24 @@ public class RouteMapActivity extends ActionBarActivity {
 
 	private DrawerLayout mDrawerLayout;
 	private ActionBarDrawerToggle mDrawerToggle;
-	private List<Route> routes = null;
-	private XMLHandler xmlHandler = null;
+	private String[] titleArr;
 	
 	private static final String TAG = "RouteMapActivity";
 	
-	//package-visible summertime variable
-	static boolean summerTime;
+
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_route_map);
-			
-		try {
-			if (routes == null) {
-				xmlHandler = new XMLHandler();
-//				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
-//				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
-				File downloadedFile = new File(getFilesDir() + "/" + RouteMapFragment.ROUTE_CONFIG_FILENAME);
-				if (downloadedFile.exists()) {
-//					Log.d(TAG, "Downloaded File exists");
-					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(openFileInput("route_config.xml")));
-				} else {
-//					Log.d(TAG, "Downloaded File does not exist");
-					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
-				}
-				summerTime = (routes.size() == 5);
-				//vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
-			}
-
-		} catch (Exception e) {
-			Log.e(TAG, "Couldn't Do it!");
-			e.printStackTrace();
-		}
 		FragmentManager fm = getSupportFragmentManager();
-		Fragment mainFragment = fm.findFragmentById(R.id.main_fragment_container);
+		RouteMapFragment mainFragment = (RouteMapFragment) fm.findFragmentById(R.id.main_fragment_container);
 		if (mainFragment == null) {
 			mainFragment = new RouteMapFragment();
 			fm.beginTransaction()
 			.add(R.id.main_fragment_container, mainFragment)
 			.commit();
 		}
-		
-		
-		//maps tags to titles
-		Map<String, String> titleMap = new Hashtable<String, String>();
-		for (Route route : routes) {
-			for (Stop stop : route.getStops()) {
-//				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
-				String title = processTitle(stop.getTitle());
-//				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
-				if (!titleMap.values().contains(title)) {
-					titleMap.put(stop.getTag(), title);
-				}
-				
-			}
-		}
-		
 		
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.container);
 		mDrawerToggle = new ActionBarDrawerToggle(
@@ -106,23 +66,19 @@ public class RouteMapActivity extends ActionBarActivity {
 		
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
-		
-		
-		
-		Collection<String> values = titleMap.values();
-		ListView sideBar = (ListView) findViewById(R.id.left_drawer);
-		String[] titleArr = values.toArray(new String[values.size()]);
-		Arrays.sort(titleArr);
-//		Log.d(TAG, "Array: " + titleArr);
-		Adapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, titleArr);
-//		Log.d(TAG, "Adapter: " + adapter);
-		sideBar.setAdapter((ListAdapter)adapter);
+
+	}
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		return super.onCreateOptionsMenu(menu);
 	}
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
         mDrawerToggle.syncState();
+        //after fragments have all been initialized
+        
     }
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -146,13 +102,7 @@ public class RouteMapActivity extends ActionBarActivity {
 		//savedInstanceState.
 		super.onSaveInstanceState(savedInstanceState);
 	}
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
 
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.route_map, menu);
-		return true;
-	}
 	private String processTitle(String title) {
 		String newTitle = new String(title);
 		int ind = newTitle.indexOf(" - Arrival");
@@ -187,5 +137,27 @@ public class RouteMapActivity extends ActionBarActivity {
 		}
 		return newTitle;
 	}
-
+	void updateSideBar(List<Route> routes) {
+		//maps tags to titles
+		Map<String, String> titleMap = new Hashtable<String, String>();
+		for (Route route : routes) {
+			for (Stop stop : route.getStops()) {
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+				String title = processTitle(stop.getTitle());
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+				if (!titleMap.values().contains(title)) {
+					titleMap.put(stop.getTag(), title);
+				}
+				
+			}
+		}
+		Collection<String> values = titleMap.values();
+		ListView sideBar = (ListView) findViewById(R.id.left_drawer);
+		titleArr = values.toArray(new String[values.size()]);
+		Arrays.sort(titleArr);
+//		Log.d(TAG, "Array: " + titleArr);
+		Adapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, titleArr);
+//		Log.d(TAG, "Adapter: " + adapter);
+		sideBar.setAdapter((ListAdapter)adapter);
+	}
 }

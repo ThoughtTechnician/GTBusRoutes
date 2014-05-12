@@ -31,6 +31,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,13 +112,33 @@ public class RouteMapFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View v = null;
-		summerTime = RouteMapActivity.summerTime;
+		try {
+			if (routes == null) {
+				xmlHandler = new XMLHandler();
+//				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+//				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
+				File downloadedFile = new File(getActivity().getFilesDir() + "/" + RouteMapFragment.ROUTE_CONFIG_FILENAME);
+				if (downloadedFile.exists()) {
+//					Log.d(TAG, "Downloaded File exists");
+					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getActivity().openFileInput("route_config.xml")));
+				} else {
+//					Log.d(TAG, "Downloaded File does not exist");
+					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
+				}
+				summerTime = (routes.size() == 5);
+				//vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
+			}
+
+		} catch (Exception e) {
+			Log.e(TAG, "Couldn't Do it!");
+			e.printStackTrace();
+		}
 		if (summerTime) {
 			v = inflater.inflate(R.layout.fragment_route_map_without_rambler, container, false);
 		} else {
 			v = inflater.inflate(R.layout.fragment_route_map, container, false);
 		}
-		
+		setHasOptionsMenu(true);
 		FragmentManager fm = getFragmentManager();
 		Fragment mapFragment = fm.findFragmentById(R.id.mapFragmentContainer);
 		if (mapFragment == null) {
@@ -156,31 +178,12 @@ public class RouteMapFragment extends Fragment {
 		emoryCheckBox = (CheckBox) v.findViewById(R.id.checkbox_emory);
 		trolleyCheckBox = (CheckBox) v.findViewById(R.id.checkbox_trolley);
 		ramblerCheckBox = (CheckBox) v.findViewById(R.id.checkbox_rambler);
-		
-		try {
-			if (routes == null) {
-				xmlHandler = new XMLHandler();
-//				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
-//				vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
-				File downloadedFile = new File(getActivity().getFilesDir() + "/" + ROUTE_CONFIG_FILENAME);
-				if (downloadedFile.exists()) {
-//					Log.d(TAG, "Downloaded File exists");
-					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getActivity().openFileInput("route_config.xml")));
-				} else {
-//					Log.d(TAG, "Downloaded File does not exist");
-					routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
-				}
-				summerTime = (routes.size() == 5);
-				//vehicles = xmlHandler.parseVehicleLocation(new BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
-			}
 
-		} catch (Exception e) {
-			Log.e(TAG, "Couldn't Do it!");
-			e.printStackTrace();
-		}
 		//gives you the paths from the default file
 		Log.d(TAG, "routes: " + routes);
 		redrawPaths();
+		//initialize the stops list
+		((RouteMapActivity) getActivity()).updateSideBar(routes);
 		
 		redCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			
@@ -315,6 +318,12 @@ public class RouteMapFragment extends Fragment {
 			Log.e(TAG, "Started Updating Buses");
 		}
 	}
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		super.onCreateOptionsMenu(menu, inflater);
+		// Inflate the menu; this adds items to the action bar if it is present.
+		inflater.inflate(R.menu.route_map, menu);
+	}
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Pass the event to ActionBarDrawerToggle, if it returns
@@ -330,7 +339,7 @@ public class RouteMapFragment extends Fragment {
 		greenCheckBox.setChecked(true);
 		emoryCheckBox.setChecked(true);
 		trolleyCheckBox.setChecked(true);
-		if (!RouteMapActivity.summerTime) {
+		if (!summerTime) {
 			ramblerCheckBox.setChecked(true);
 		}
 	}
@@ -680,9 +689,16 @@ public class RouteMapFragment extends Fragment {
 		}
 		@Override
 		protected void onPostExecute(Void result){
+			try {
+				routes = xmlHandler.parseRouteConfig(new BufferedInputStream(getActivity().openFileInput(ROUTE_CONFIG_FILENAME)));
+				summerTime = (routes.size() == 5);
+
+			} catch (Exception e) {
+				Log.e(TAG, "Could not put updated route config into place!");
+				e.printStackTrace();
+			}
 			redrawPaths();
-			summerTime = (routes.size() == 5);
-			Log.e(TAG, "Just called onPostExecute method");
+			((RouteMapActivity) getActivity()).updateSideBar(routes);
 		}
 	}
 	private class BusUpdateClass extends AsyncTask<Void, Void, Void> {
@@ -810,5 +826,8 @@ public class RouteMapFragment extends Fragment {
 			}
 		}
 
+	}
+	public List<Route> getRoutes() {
+		return routes;
 	}
 }
