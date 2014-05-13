@@ -18,7 +18,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 public class PlacesHandler {
 	private static String baseUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
-	private static final LatLng ATLANTA = new LatLng(33.7765,-84.4002);
+	public static final LatLng ATLANTA = new LatLng(33.7765,-84.4002);
 	
 	double latitude;
 	double longitude;
@@ -29,6 +29,7 @@ public class PlacesHandler {
 		longitude = origin.longitude;
 	}
 	public List<Place> acquirePlaces(String keyword) {
+		Log.d("PlacesHandler", "Inside acquirePlaces with keyword: " + keyword);
 		StringBuilder urlBuilder = new StringBuilder(baseUrl);
 		urlBuilder.append("location=");
 		urlBuilder.append(latitude);
@@ -41,10 +42,11 @@ public class PlacesHandler {
 		urlBuilder.append("&sensor=false");
 		Log.e("PlacesHandler", "URL is: " + urlBuilder.toString());
 		urlBuilder.append("&key=");
-		urlBuilder.append(context.getString(R.string.maps_api_key));
+		urlBuilder.append(context.getString(R.string.places_api_key));
 		StringBuilder jsonBuilder = new StringBuilder();
 		try {
 			URL url = new URL(urlBuilder.toString());
+			Log.d("PlacesHandler", "FOR REAL: " + url);
 			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 			connection.setReadTimeout(10000);
 			connection.setConnectTimeout(15000);
@@ -64,6 +66,7 @@ public class PlacesHandler {
 		}
 		List<Place> list = new ArrayList<Place>();
 		try {
+			Log.d("PlacesHandler", "jsonBuilder: " + jsonBuilder);
 			JSONObject jsonObject = new JSONObject(jsonBuilder.toString());
 			JSONArray jsonArray = jsonObject.getJSONArray("results");
 			
@@ -74,6 +77,7 @@ public class PlacesHandler {
 			}
 		} catch (Exception e) {
 			Log.e("PlacesHandler", "Could do the json business");
+			e.printStackTrace();
 		}
 		return list;
 	}

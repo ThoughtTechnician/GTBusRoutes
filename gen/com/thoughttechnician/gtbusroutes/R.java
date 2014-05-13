@@ -1314,19 +1314,19 @@ containing a value of this type.
         public static final int action_menu_divider=0x7f070016;
         public static final int action_menu_presenter=0x7f070017;
         public static final int action_mode_close_button=0x7f070027;
-        public static final int action_settings=0x7f07004a;
+        public static final int action_settings=0x7f07004b;
         public static final int activity_chooser_view_content=0x7f070028;
         public static final int always=0x7f07000b;
         public static final int beginning=0x7f070011;
         public static final int checkbox=0x7f070030;
-        public static final int checkbox_blue=0x7f070044;
-        public static final int checkbox_emory=0x7f070046;
-        public static final int checkbox_green=0x7f070045;
-        public static final int checkbox_rambler=0x7f070048;
-        public static final int checkbox_red=0x7f070043;
-        public static final int checkbox_trolley=0x7f070047;
+        public static final int checkbox_blue=0x7f070045;
+        public static final int checkbox_emory=0x7f070047;
+        public static final int checkbox_green=0x7f070046;
+        public static final int checkbox_rambler=0x7f070049;
+        public static final int checkbox_red=0x7f070044;
+        public static final int checkbox_trolley=0x7f070048;
         public static final int collapseActionView=0x7f07000d;
-        public static final int container=0x7f07003f;
+        public static final int container=0x7f070040;
         public static final int default_activity_button=0x7f07002b;
         public static final int dialog=0x7f07000e;
         public static final int disableHome=0x7f070008;
@@ -1341,11 +1341,11 @@ containing a value of this type.
         public static final int icon=0x7f07002d;
         public static final int ifRoom=0x7f07000a;
         public static final int image=0x7f07002a;
-        public static final int left_drawer=0x7f070041;
+        public static final int left_drawer=0x7f070042;
         public static final int listMode=0x7f070001;
         public static final int list_item=0x7f07002c;
-        public static final int main_fragment_container=0x7f070040;
-        public static final int mapFragmentContainer=0x7f070042;
+        public static final int main_fragment_container=0x7f070041;
+        public static final int mapFragmentContainer=0x7f070043;
         public static final int middle=0x7f070012;
         public static final int never=0x7f070009;
         public static final int none=0x7f070010;
@@ -1358,6 +1358,7 @@ containing a value of this type.
         public static final int search_bar=0x7f070034;
         public static final int search_button=0x7f070036;
         public static final int search_close_btn=0x7f07003b;
+        public static final int search_container=0x7f07003f;
         public static final int search_edit_frame=0x7f070037;
         public static final int search_go_btn=0x7f07003d;
         public static final int search_mag_icon=0x7f070038;
@@ -1368,7 +1369,7 @@ containing a value of this type.
         public static final int showCustom=0x7f070007;
         public static final int showHome=0x7f070004;
         public static final int showTitle=0x7f070006;
-        public static final int sidebar_item_layout=0x7f070049;
+        public static final int sidebar_item_layout=0x7f07004a;
         public static final int split_action_bar=0x7f070021;
         public static final int submit_area=0x7f07003c;
         public static final int tabMode=0x7f070002;
@@ -1430,12 +1431,14 @@ containing a value of this type.
         public static final int abc_search_dropdown_item_icons_2line=0x7f030015;
         public static final int abc_search_view=0x7f030016;
         public static final int abc_simple_decor=0x7f030017;
-        public static final int activity_route_map=0x7f030018;
-        public static final int activity_route_map_without_rambler=0x7f030019;
-        public static final int fragment_route_map=0x7f03001a;
-        public static final int fragment_route_map_without_rambler=0x7f03001b;
-        public static final int sidebar=0x7f03001c;
-        public static final int support_simple_spinner_dropdown_item=0x7f03001d;
+        public static final int activity_place_search=0x7f030018;
+        public static final int activity_route_map=0x7f030019;
+        public static final int activity_route_map_without_rambler=0x7f03001a;
+        public static final int fragment_place_search=0x7f03001b;
+        public static final int fragment_route_map=0x7f03001c;
+        public static final int fragment_route_map_without_rambler=0x7f03001d;
+        public static final int sidebar=0x7f03001e;
+        public static final int support_simple_spinner_dropdown_item=0x7f03001f;
     }
     public static final class menu {
         public static final int route_map=0x7f0e0000;
@@ -1485,8 +1488,8 @@ containing a value of this type.
         /**  Description of a share target (both in the list of such or the default share button) in a ShareActionProvider (share UI). [CHAR LIMIT=NONE] 
          */
         public static final int abc_shareactionprovider_share_with_application=0x7f0c000b;
-        public static final int action_settings=0x7f0c002b;
-        public static final int app_name=0x7f0c0029;
+        public static final int action_settings=0x7f0c002c;
+        public static final int app_name=0x7f0c002a;
         /**   Title for notification shown when GooglePlayServices needs to be
         enabled for a application to work. [CHAR LIMIT=70] 
          */
@@ -1581,14 +1584,16 @@ containing a value of this type.
         /**  Long form sign-in button text [CHAR LIMIT=30] 
          */
         public static final int common_signin_button_text_long=0x7f0c0020;
-        public static final int drawer_close=0x7f0c002d;
-        public static final int drawer_open=0x7f0c002c;
-        public static final int hello_world=0x7f0c002a;
+        public static final int drawer_close=0x7f0c002e;
+        public static final int drawer_open=0x7f0c002d;
+        public static final int hello_world=0x7f0c002b;
         /**  Location client code resources (prefix with location_client) 
          */
         public static final int location_client_powered_by_google=0x7f0c0027;
         public static final int maps_api_key=0x7f0c0028;
-        public static final int search_hint=0x7f0c002e;
+        public static final int places_api_key=0x7f0c0029;
+        public static final int search_hint=0x7f0c002f;
+        public static final int title_activity_place_search=0x7f0c0030;
     }
     public static final class style {
         /** 

@@ -138,6 +138,9 @@ public class RouteMapActivity extends ActionBarActivity {
 		return newTitle;
 	}
 	void updateSideBar(List<Route> routes) {
+		if (routes == null) {
+			return;
+		}
 		//maps tags to titles
 		Map<String, String> titleMap = new Hashtable<String, String>();
 		for (Route route : routes) {
