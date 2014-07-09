@@ -1,9 +1,8 @@
 package com.thoughttechnician.gtbusroutes;
 
-import java.io.BufferedInputStream;
-import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -11,18 +10,14 @@ import java.util.Map;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Adapter;
-import android.widget.ArrayAdapter;
+import android.widget.ExpandableListView;
 import android.widget.ListAdapter;
-import android.widget.ListView;
 
 public class RouteMapActivity extends ActionBarActivity {
 
@@ -103,64 +98,37 @@ public class RouteMapActivity extends ActionBarActivity {
 		super.onSaveInstanceState(savedInstanceState);
 	}
 
-	private String processTitle(String title) {
-		String newTitle = new String(title);
-		int ind = newTitle.indexOf(" - Arrival");
-		if (ind != -1) {
-			if (ind + 10 == newTitle.length()) {
-				newTitle = newTitle.substring(0, ind);
-			} else {
-				newTitle = newTitle.substring(0, ind) + newTitle.substring(ind + 10, newTitle.length() - 1);
-			}
-		} else {
-			ind = newTitle.indexOf(" - Hidden Departure");
-			if (ind != -1) {
-				if (ind + 19 == newTitle.length()) {
-					newTitle = newTitle.substring(0, ind);
-				} else {
-					newTitle = newTitle.substring(0, ind) + newTitle.substring(ind + 19, newTitle.length() - 1);
-				}
-			}
-		}
-		ind = newTitle.indexOf("Street");
-		if (ind != -1) {
-//			Log.d(TAG, newTitle);
-//			Log.d(TAG, "ind: " + ind);
-//			Log.d(TAG, "ind + 6 : " + (ind + 6));
-//			Log.d(TAG, "newTitle.length() - 1: " + (newTitle.length() - 1));
-			if (ind + 6 == newTitle.length()) {
-				newTitle = newTitle.substring(0, ind) + "St";
-			} else {
-				newTitle = newTitle.substring(0, ind) + "St" + newTitle.substring(ind + 6, newTitle.length() - 1);
-			}
-//			Log.d(TAG, "fixed: " + newTitle);
-		}
-		return newTitle;
-	}
-	void updateSideBar(List<Route> routes) {
+
+	void updateSideBar(List<Route> routes, List<Stop> stopList, HashMap<Stop,
+			List<Prediction>> stopPredictionMap) {
 		if (routes == null) {
 			return;
 		}
 		//maps tags to titles
-		Map<String, String> titleMap = new Hashtable<String, String>();
-		for (Route route : routes) {
-			for (Stop stop : route.getStops()) {
-//				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
-				String title = processTitle(stop.getTitle());
-//				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
-				if (!titleMap.values().contains(title)) {
-					titleMap.put(stop.getTag(), title);
-				}
-				
-			}
-		}
-		Collection<String> values = titleMap.values();
-		ListView sideBar = (ListView) findViewById(R.id.left_drawer);
-		titleArr = values.toArray(new String[values.size()]);
-		Arrays.sort(titleArr);
+//		Map<String, String> titleMap = new Hashtable<String, String>();
+//		for (Route route : routes) {
+//			for (Stop stop : route.getStops()) {
+////				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+//				String title = processTitle(stop.getTitle());
+////				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+//				if (!titleMap.values().contains(title)) {
+//					titleMap.put(stop.getTag(), title);
+//				}
+//				
+//			}
+//		}
+
+		//right here we need to fill this hash map with all the time predictions for each stop
+		ExpandableListView sideBar = (ExpandableListView) findViewById(R.id.left_drawer);
+		//titleArr = values.toArray(new String[values.size()]);
+		//Arrays.sort(titleArr);
 //		Log.d(TAG, "Array: " + titleArr);
-		Adapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, titleArr);
+		//Adapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, titleArr);
+		//ArrayList<String> headers = new ArrayList<String>(titleMap.values());
+		System.out.println("tang: " + stopPredictionMap);
+		ExpandableListAdapter adapter = new ExpandableListAdapter(this, stopList, stopPredictionMap);
 //		Log.d(TAG, "Adapter: " + adapter);
-		sideBar.setAdapter((ListAdapter)adapter);
+		//sideBar.setAdapter((ListAdapter) adapter);
+		sideBar.setAdapter(adapter);
 	}
 }

@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.LatLng;
 public class PlacesHandler {
 	private static String baseUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
 	public static final LatLng ATLANTA = new LatLng(33.7765,-84.4002);
+	public static final LatLng SMITH = new LatLng(33.771935,-84.391586);
 	
 	double latitude;
 	double longitude;

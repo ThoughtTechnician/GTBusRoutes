@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,7 +40,6 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -59,6 +59,8 @@ public class RouteMapFragment extends Fragment {
 	static final String ROUTE_CONFIG_FILENAME = "route_config.xml";
 
 	private List<Route> routes = null;
+	private List<Stop> stopList = null;
+	private HashMap<Stop, List<Prediction>> stopPredictionMap = null;
 	// private List<Vehicle> vehicles = null;
 	private XMLHandler xmlHandler = null;
 
@@ -113,7 +115,7 @@ public class RouteMapFragment extends Fragment {
 		View v = null;
 		try {
 			if (routes == null) {
-				xmlHandler = new XMLHandler();
+				xmlHandler = new XMLHandler(getActivity());
 				// routes = xmlHandler.parseRouteConfig(new
 				// BufferedInputStream(getResources().openRawResource(R.raw.my_route_config)));
 				// vehicles = xmlHandler.parseVehicleLocation(new
@@ -136,7 +138,9 @@ public class RouteMapFragment extends Fragment {
 				summerTime = (routes.size() == 5);
 				// vehicles = xmlHandler.parseVehicleLocation(new
 				// BufferedInputStream(getResources().openRawResource(R.raw.vehicle_location)));
+				stopPredictionMap = new HashMap<Stop, List<Prediction>>();
 			}
+
 
 		} catch (Exception e) {
 			Log.e(TAG, "Couldn't Do it!");
@@ -193,14 +197,43 @@ public class RouteMapFragment extends Fragment {
 		// gives you the paths from the default file
 		Log.d(TAG, "routes: " + routes);
 		redrawPaths();
+		
+		
+		//collect a list of all the stops
+//		stopList = new ArrayList<Stop>();
+//		for (Route route : routes) {
+//			for (Stop stop : route.getStops()) {
+////				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+//				String title = processTitle(stop.getTitle());
+//				boolean alreadyThere = false;
+//				int count = 0;
+//				int size = stopList.size();
+//				while (!alreadyThere && count < size) {
+//					alreadyThere = stopList.get(count).getTitle().equals(title);
+//					count++;
+//				}
+////				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+//				if (!alreadyThere) {
+//					stop.setTitle(title);
+//					stopList.add(stop);
+//				}
+//				
+//			}
+//		}
+		
+		
+		
 		// initialize the stops list
-		((RouteMapActivity) getActivity()).updateSideBar(routes);
+		((RouteMapActivity) getActivity()).updateSideBar(routes,
+				stopList,
+				stopPredictionMap);
 
 		redCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
 			@Override
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
+				System.out.println("redLines[0]: " + redLines[0]);
 				if (redLines[0].isVisible() != isChecked) {
 					for (int i = 0; i < redLines.length; i++) {
 						redLines[i].setVisible(isChecked);
@@ -316,7 +349,7 @@ public class RouteMapFragment extends Fragment {
 		super.onCreate(onSavedInstanceState);
 		networkConnected = connected();
 		IntentFilter filter = new IntentFilter(
-				ConnectivityManager.CONNECTIVITY_ACTION);
+		ConnectivityManager.CONNECTIVITY_ACTION);
 		networkReceiver = new NetworkReceiver();
 		getActivity().registerReceiver(networkReceiver, filter);
 
@@ -381,6 +414,41 @@ public class RouteMapFragment extends Fragment {
 		new DownloadRouteConfigTask().execute();
 	}
 
+	private String processTitle(String title) {
+		String newTitle = new String(title);
+		int ind = newTitle.indexOf(" - Arrival");
+		if (ind != -1) {
+			if (ind + 10 == newTitle.length()) {
+				newTitle = newTitle.substring(0, ind);
+			} else {
+				newTitle = newTitle.substring(0, ind) + newTitle.substring(ind + 10, newTitle.length() - 1);
+			}
+		} else {
+			ind = newTitle.indexOf(" - Hidden Departure");
+			if (ind != -1) {
+				if (ind + 19 == newTitle.length()) {
+					newTitle = newTitle.substring(0, ind);
+				} else {
+					newTitle = newTitle.substring(0, ind) + newTitle.substring(ind + 19, newTitle.length() - 1);
+				}
+			}
+		}
+		ind = newTitle.indexOf("Street");
+		if (ind != -1) {
+//			Log.d(TAG, newTitle);
+//			Log.d(TAG, "ind: " + ind);
+//			Log.d(TAG, "ind + 6 : " + (ind + 6));
+//			Log.d(TAG, "newTitle.length() - 1: " + (newTitle.length() - 1));
+			if (ind + 6 == newTitle.length()) {
+				newTitle = newTitle.substring(0, ind) + "St";
+			} else {
+				newTitle = newTitle.substring(0, ind) + "St" + newTitle.substring(ind + 6, newTitle.length() - 1);
+			}
+//			Log.d(TAG, "fixed: " + newTitle);
+		}
+		return newTitle;
+	}
+	
 	private void redrawBuses() {
 		// System.out.println("red: " + redVehicles);
 		// System.out.println("blue: " + blueVehicles);
@@ -745,6 +813,15 @@ public class RouteMapFragment extends Fragment {
 				os.close();
 				is.close();
 				Log.e(TAG, "Just updated route info");
+				
+				
+				//mixin it up
+
+				//extra added in to do navigation bar submenus
+				stopPredictionMap = acquirePredictions(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=predictionsForMultiStops&r=trolley"));
+
+				
+				
 			} catch (Exception e) {
 				Log.e(TAG,
 						"Could not do something within the route config task");
@@ -765,6 +842,9 @@ public class RouteMapFragment extends Fragment {
 				}
 			}
 
+
+			
+			
 			return null;
 		}
 
@@ -780,7 +860,32 @@ public class RouteMapFragment extends Fragment {
 				e.printStackTrace();
 			}
 			redrawPaths();
-			((RouteMapActivity) getActivity()).updateSideBar(routes);
+			
+			//collect a list of all the stops
+//			stopList = new ArrayList<Stop>();
+//			for (Route route : routes) {
+//				for (Stop stop : route.getStops()) {
+////					Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+//					String title = processTitle(stop.getTitle());
+//					boolean alreadyThere = false;
+//					int count = 0;
+//					int size = stopList.size();
+//					while (!alreadyThere && count < size) {
+//						alreadyThere = stopList.get(count).getTitle().equals(title);
+//						count++;
+//					}
+////					Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+//					if (!alreadyThere) {
+//						stop.setTitle(title);
+//						stopList.add(stop);
+//					}
+//					
+//				}
+//			}
+			
+			((RouteMapActivity) getActivity()).updateSideBar(routes,
+					stopList,
+					stopPredictionMap);
 		}
 	}
 
@@ -817,7 +922,60 @@ public class RouteMapFragment extends Fragment {
 			redrawBuses();
 		}
 	}
-
+	private HashMap<Stop, List<Prediction>> acquirePredictions(URL url) throws Exception {
+		
+		//collect a list of all the stops
+		stopList = new ArrayList<Stop>();
+		for (Route route : routes) {
+			for (Stop stop : route.getStops()) {
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+				String title = processTitle(stop.getTitle());
+				boolean alreadyThere = false;
+				int count = 0;
+				int size = stopList.size();
+				while (!alreadyThere && count < size) {
+					alreadyThere = stopList.get(count).getTitle().equals(title);
+					count++;
+				}
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+				if (!alreadyThere) {
+					stop.setTitle(title);
+					stopList.add(stop);
+				}
+				
+			}
+		}
+		
+		InputStream is = null;
+		HashMap<Stop, List<Prediction>> predictionResults = null;
+		try {
+			HttpURLConnection connection = (HttpURLConnection) url
+					.openConnection();
+			connection.setReadTimeout(10000);
+			connection.setConnectTimeout(15000);
+			connection.setRequestMethod("GET");
+			connection.setDoInput(true);
+			
+			connection.connect();
+			int response = connection.getResponseCode();
+			if(response != 200) {
+				throw new Exception("Response Code was " + response);
+			}
+			is = new BufferedInputStream(connection.getInputStream());
+			predictionResults = xmlHandler.parsePredictions(is, stopList);
+			is.close();
+		}
+		finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException ex) {
+					Log.e(TAG, "Could not close predictions instream");
+				}
+			}
+		}
+		return predictionResults;
+	}
 	private List<Vehicle> acquireVehicleLocations(URL url) throws Exception {
 		InputStream is = null;
 		List<Vehicle> vehicleResults = null;
@@ -864,6 +1022,7 @@ public class RouteMapFragment extends Fragment {
 	}
 
 	final Runnable updater = new Runnable() {
+		@Override
 		public void run() {
 			try {
 				redVehicles = acquireVehicleLocations(new URL(
@@ -886,6 +1045,8 @@ public class RouteMapFragment extends Fragment {
 						redrawBuses();
 					}
 				});
+				stopPredictionMap = acquirePredictions(new URL("http://gtwiki.info/nextbus/nextbus.php?a=georgia-tech&command=predictionsForMultiStops&r=trolley"));
+
 			} catch (Exception e) {
 				Log.e(TAG, "Bus Update Failed");
 				e.printStackTrace();
@@ -899,6 +1060,12 @@ public class RouteMapFragment extends Fragment {
 							"Failed and not connected: cancelling bus updates");
 				}
 			}
+		}
+	};
+	final Runnable predictionUpdater = new Runnable() {
+		@Override
+		public void run() {
+			
 		}
 	};
 
