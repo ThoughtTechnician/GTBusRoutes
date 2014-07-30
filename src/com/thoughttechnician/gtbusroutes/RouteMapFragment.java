@@ -200,6 +200,7 @@ public class RouteMapFragment extends Fragment {
 		
 		
 		//collect a list of all the stops
+		//old way
 //		stopList = new ArrayList<Stop>();
 //		for (Route route : routes) {
 //			for (Stop stop : route.getStops()) {
@@ -220,8 +221,59 @@ public class RouteMapFragment extends Fragment {
 //				
 //			}
 //		}
+//		
+
+		stopList = new ArrayList<Stop>();
+		for (Route route : routes) {
+			for (Stop stop : route.getStops()) {
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+				String title = processTitle(stop.getTitle());
+				boolean alreadyThere = false;
+				int count = 0;
+				int size = stopList.size();
+				while (!alreadyThere && count < size) {
+					alreadyThere = stopList.get(count).getTitle().equals(title);
+					count++;
+				}
+//				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+				if (!alreadyThere) {
+					count = 0;
+					size = stopList.size();
+					while (stopList.get(count).compareTo(stop) < 0) {
+						count++;
+					}
+					stop.setTitle(title);
+					stopList.add(stop);
+				}
+				
+			}
+		}
 		
-		
+//		stopList = new ArrayList<Stop>();
+//		for (Route route : routes) {
+//			for (Stop stop : route.getStops()) {
+////				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+//				String title = processTitle(stop.getTitle());
+//				boolean alreadyThere = false;
+//				int count = 0;
+//				int size = stopList.size();
+//				while (!alreadyThere && count < size) {
+//					alreadyThere = stopList.get(count).getTitle().equals(title);
+//					count++;
+//				}
+////				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
+//				if (!alreadyThere) {
+//					count = 0;
+//					size = stopList.size();
+//					while (stopList.get(count).compareTo(stop) < 0) {
+//						count++;
+//					}
+//					stop.setTitle(title);
+//					stopList.add(count, stop);
+//				}
+//				
+//			}
+//		}
 		
 		// initialize the stops list
 		((RouteMapActivity) getActivity()).updateSideBar(routes,
@@ -925,6 +977,31 @@ public class RouteMapFragment extends Fragment {
 	private HashMap<Stop, List<Prediction>> acquirePredictions(URL url) throws Exception {
 		
 		//collect a list of all the stops
+//		stopList = new ArrayList<Stop>();
+//		for (Route route : routes) {
+//			for (Stop stop : route.getStops()) {
+////				Log.d(TAG, "Tag: " + stop.getTag() + " Title: " + stop.getTitle());
+//				String title = processTitle(stop.getTitle());
+//				boolean alreadyThere = false;
+//				int count = 0;
+//				int size = stopList.size();
+//				while (!alreadyThere && count < size) {
+//					int comp = stopList.get(count).compareTo(stop);
+//					if (comp < 0) {
+//						count++;
+//					} else if (comp > 0) {
+//						stop.setTitle(title);
+//						stopList.add(count, stop);
+//					} else {
+//						alreadyThere = true;
+//					}
+//				}
+//				if (size == 0) {
+//					stop.setTitle(title);
+//					stopList.add(stop);
+//				}
+//			}
+//		}
 		stopList = new ArrayList<Stop>();
 		for (Route route : routes) {
 			for (Stop stop : route.getStops()) {
@@ -939,8 +1016,13 @@ public class RouteMapFragment extends Fragment {
 				}
 //				Log.d(TAG, "Tag: " + stop.getTag() + " Processed Title: " + title);
 				if (!alreadyThere) {
+					count = 0;
+					size = stopList.size();
+					while (stopList.get(count).compareTo(stop) < 0) {
+						count++;
+					}
 					stop.setTitle(title);
-					stopList.add(stop);
+					stopList.add(count, stop);
 				}
 				
 			}

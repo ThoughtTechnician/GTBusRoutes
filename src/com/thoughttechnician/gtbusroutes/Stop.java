@@ -2,7 +2,7 @@ package com.thoughttechnician.gtbusroutes;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class Stop {
+public class Stop implements Comparable<Stop> {
 	private LatLng loc = null;
 	private String stopId = "";
 	private String tag = null;
@@ -40,5 +40,9 @@ public class Stop {
 			code += buffer[i] * Math.pow(10, 2 * i);
 		}
 		return code;
+	}
+	@Override
+	public int compareTo(Stop other) {
+		return title.compareTo(other.getTitle());
 	}
 }

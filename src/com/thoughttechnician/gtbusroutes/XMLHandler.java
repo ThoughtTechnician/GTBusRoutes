@@ -58,6 +58,7 @@ public class XMLHandler {
 			String name = parser.getName();
 
 			if (name.equals("predictions")) {
+				Log.e(TAG, "predictions for " + parser.getAttributeValue(ns, "stopTitle") + " collected");
 				String title = parser.getAttributeValue(ns, "title");
 				String tag = parser.getAttributeValue(ns, "stopTag");
 

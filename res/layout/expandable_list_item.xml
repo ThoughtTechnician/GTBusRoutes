@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="55dip"
     android:orientation="vertical"
-    android:background="#fff" >
+    android:background="#ECD253" >
 
         <TextView
         android:id="@+id/headerView"
@@ -12,7 +12,7 @@
         android:textSize="17dip"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
-        android:textColor="#ff9900"
+        android:textColor="#fff"
         android:paddingLeft="?android:attr/expandableListPreferredChildPaddingLeft" />
 
 </LinearLayout>
